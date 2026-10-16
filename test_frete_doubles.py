@@ -1,26 +1,56 @@
-from unittest.mock import Mock
-
-from frete import confirmar_frete
-from servicos import ServicoLogisticaAPI, ServicoNotificacao
+from frete import calcular_frete_regional
 
 
-def test_confirmar_frete_com_test_doubles():
+def test_norte_abaixo_de_300_cobra_taxa_adicional():
     # Arrange
-    usuario_dummy = object()  # Dummy: só preenche a assinatura
-
-    logistica_stub = Mock(spec=ServicoLogisticaAPI)  # Stub: resposta fixa
-    logistica_stub.consultar_taxa.return_value = 22.50
-
-    notificacao_mock = Mock(spec=ServicoNotificacao)  # Mock/Spy: verifica chamada
-
-    pedido_id = "PED-123"
+    subtotal = 100.00
 
     # Act
-    frete = confirmar_frete(
-        pedido_id, "Sudeste", 100.00,
-        usuario_dummy, logistica_stub, notificacao_mock,
-    )
+    frete = calcular_frete_regional(subtotal, "Norte")
 
     # Assert
-    assert frete == 22.50
-    notificacao_mock.enviar_notificacao_rastreio.assert_called_once_with("PED-123")
+    assert frete == 25.00
+
+
+def test_nordeste_abaixo_de_300_cobra_taxa_adicional():
+    # Arrange
+    subtotal = 280.00
+
+    # Act
+    frete = calcular_frete_regional(subtotal, "Nordeste")
+
+    # Assert
+    assert frete == 25.00
+
+
+def test_norte_exatamente_300_ainda_cobra_frete():
+    # Arrange
+    subtotal = 300.00
+
+    # Act
+    frete = calcular_frete_regional(subtotal, "Norte")
+
+    # Assert
+    assert frete == 25.00
+
+
+def test_nordeste_acima_de_300_frete_gratis():
+    # Arrange
+    subtotal = 300.01
+
+    # Act
+    frete = calcular_frete_regional(subtotal, "Nordeste")
+
+    # Assert
+    assert frete == 0.00
+
+
+def test_outras_regioes_mantem_regra_padrao():
+    # Arrange
+    subtotal = 100.00
+
+    # Act
+    frete = calcular_frete_regional(subtotal, "Sudeste")
+
+    # Assert
+    assert frete == 15.00
